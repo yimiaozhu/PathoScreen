@@ -2,7 +2,7 @@
 PathoScreen was designed for predicting **small-molecule perturbation capability on MASLD-specific pathways** as a **binary classification** task.
 
 ## Framework
-![Model Architecture](./figure/PathoScreen.jpg) 
+![Model Architecture](./assets/PathoScreen.jpg) 
 
 ## Installation
 Create the conda environment:
