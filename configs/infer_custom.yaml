@@ -1,0 +1,6 @@
+# PathoScreen Inference Configuration Template
+
+device: cuda
+cell_matrix_path: data/cell_matrix/input_cell_matrix.pkl
+smiles_cache_path: data/cache/smiles_graph_cache_v1.pkl
+

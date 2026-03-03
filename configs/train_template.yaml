@@ -1,0 +1,17 @@
+# PathoScreen Inference Configuration Template
+
+seed: 4
+device: cuda
+
+cell_matrix_path: data/cell_matrix/input_cell_matrix.pkl
+smiles_cache_path: data/cache/smiles_graph_cache_v1.pkl
+
+train_csv: data/pathways/fatty_acid_metabolism/train.csv
+test_csv: data/pathways/fatty_acid_metabolism/test.csv
+pathway_id: 0
+
+epochs: 20
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 1.0e-5
+num_workers: 0
