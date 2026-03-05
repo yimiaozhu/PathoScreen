@@ -101,7 +101,7 @@ Two usage modes:
 Example using a candidate file:
 
 ```bash
-python scripts/build_smiles_cache.py \
+python -m src.cli build-cache \
   --input_csv data/candidates.csv \
   --output_path data/cache/smiles_graph.pkl
 ```
@@ -109,7 +109,7 @@ python scripts/build_smiles_cache.py \
 Alternatively, scan a directory structure:
 
 ```bash
-python scripts/build_smiles_cache.py \
+python -m src.cli build-cache \
   --pathways_root data/pathways \
   --output_path data/cache/smiles_graph.pkl
 ```
@@ -146,7 +146,7 @@ Fit **Isotonic Regression calibrators** on the held-out test set.
 python -m src.cli calibrate \
   --pathway_ids 0 \
   --test_data_root data/pathways \
-  --emb_path data/cell_matrix/input_cell_matrix.pkl
+  --emb_path data/cell_emb/input_cell_matrix.pkl
 ```
 
 Calibration improves probability reliability and enables **Brier score estimation**.
@@ -168,7 +168,7 @@ Run inference using the **pre-trained models and calibrators**.
 python -m src.cli predict \
   --pathway_id 0 \
   --input_csv data/candidates.csv \
-  --emb_pkl data/cell_matrix/input_cell_matrix.pkl \
+  --emb_pkl data/cell_emb/input_cell_matrix.pkl \
   --smiles_cache data/cache/smiles_graph.pkl \
   --use_pretrained \
   --output_csv output/P0_results.csv
@@ -183,9 +183,8 @@ The output file contains **pathway-specific perturbation probabilities and predi
 Aggregate predictions across all **7 MASLD pathways (P0–P6)** to prioritize candidate compounds.
 
 ```bash
-python scripts.rank_candidates.py \
+python -m src.cli rank \
   --pred_dir output \
-  --brier_json calibration_results/brier_scores.json \
   --output_file output/final_rank.csv
 ```
 
