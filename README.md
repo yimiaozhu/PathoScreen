@@ -47,20 +47,18 @@ Please Download the following files:
 
 1. Download the files from **[Zontero Link Placeholder]**
    
-2. Place them into the directory:
-
-```
-resources/
-```
-
-Example structure:
+2. Place them into their respective directory:
 
 ```
 PathoScreen
 │
-├── resources
-│   ├── scFoundation.ckpt
-│   └── input_cell_matrix.pkl
+├── external
+│   └── model
+│       └── models
+│           └── models.ckpt
+├── data
+│   └── cell_emb
+│       └── input_cell_matrix.pkl
 ```
 
 Note:
@@ -71,7 +69,7 @@ Note:
 
 ### 2. Generate Cell Embeddings (scFoundation)
 
-If you want to generate cell embeddings from your own **gene expression matrix**, you can run the scFoundation embedding pipeline.
+If you want to generate cell embeddings from your own **gene expression matrix**, you can run the scFoundation embedding pipeline using our wrapper script.
 
 First initialize the submodule:
 
@@ -79,14 +77,13 @@ First initialize the submodule:
 git submodule update --init --recursive
 ```
 
-Then run the embedding script:
+Then run the embedding bash script, providing your input CSV and desired output directory:
 
 ```bash
-python scripts/generate_embeddings.py \
-  --input_csv path/to/gene_expression.csv \
-  --scfoundation_ckpt /path/to/scFoundation.ckpt \
-  --output_path data/cell_emb/input_cell_matrix.pkl
+bash scripts/run_scfoundation_emb.sh path/to/your_gene_expression.csv data/cell_emb/
 ```
+
+Note: Ensure models.ckpt is properly placed in `external/scFoundation/model/models/` before running this script.
 
 ---
 
