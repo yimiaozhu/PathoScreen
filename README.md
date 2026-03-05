@@ -2,6 +2,8 @@
 
 **PathoScreen** is a deep learning framework designed to predict the **perturbation capability of small molecules on MASLD-specific pathways**. 
 
+![Model Architecture](./assets/PathoScreen.jpg)   
+
 ---
 
 # 🔬 Scientific Context
