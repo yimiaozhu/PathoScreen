@@ -83,9 +83,10 @@ def mol_to_graph_features(smiles):
 
 
 class PathoScreenDataset(Dataset):
-    def __init__(self, csv_path, mode='train', emb_pkl=None, emb_dir=None, strict_cell=True):
+    def __init__(self, csv_path, mode='train', emb_pkl=None, emb_dir=None, strict_cell=True, smiles_cache_path=None):
         self.mode = mode
         self.strict_cell = strict_cell
+        self.smiles_cache = None
 
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"CSV file not found: {csv_path}")
@@ -124,6 +125,14 @@ class PathoScreenDataset(Dataset):
             if not os.path.isdir(self.emb_dir):
                 raise FileNotFoundError(f"Embedding directory not found: {self.emb_dir}")
             print(f"[{mode.upper()}] Using cell embedding directory: {self.emb_dir}")
+
+        if smiles_cache_path:
+            if os.path.exists(smiles_cache_path):
+                print(f"[{mode.upper()}] Loading SMILES graph cache: {smiles_cache_path}")
+                with open(smiles_cache_path, "rb") as f:
+                    self.smiles_cache = pickle.load(f)
+            else:
+                print(f"⚠️ Warning: SMILES cache path provided but not found: {smiles_cache_path}")
 
     def get_labels(self):
         if 'label' in self.data.columns:
@@ -184,7 +193,11 @@ class PathoScreenDataset(Dataset):
         smiles = str(row['SMILES']).strip()
         cell_id = str(row['cell_id']).strip()
 
-        atom_feat, adj = mol_to_graph_features(smiles)
+        if self.smiles_cache and smiles in self.smiles_cache:
+            atom_feat, adj = self.smiles_cache[smiles]
+        else:
+            atom_feat, adj = mol_to_graph_features(smiles)
+            
         if atom_feat is None:
             return self.__getitem__((idx + 1) % len(self))
 

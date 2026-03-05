@@ -1,0 +1,17 @@
+# configs/default_train.yaml
+data:
+  # Placeholders, usually overridden by CLI
+  train_path: "data/pathways/P{pathway_id}/train.csv"
+  test_path: "data/pathways/P{pathway_id}/test.csv"
+  cell_matrix_path: "data/cell_emb/input_cell_matrix.pkl"
+
+train:
+  seed: 666
+  epochs: 300
+  batch_size: 32
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  num_workers: 4
+  pin_memory: true

@@ -1,15 +1,15 @@
 import argparse
 import glob
 import os
+import pickle
 from datetime import datetime
 from typing import Set
 
 import pandas as pd
 from tqdm import tqdm
 
-from ..src.data.dataset import mol_to_graph_features, NUM_ATOM_FEAT
-from ..src.utils import canonicalize_smiles
-from ..src.data.cache import SmilesGraphCache
+from src.data.dataset import mol_to_graph_features, NUM_ATOM_FEAT
+from src.utils import canonicalize_smiles
 
 
 def collect_smiles(pathways_root):
@@ -28,21 +28,39 @@ def collect_smiles(pathways_root):
     return smiles_set
 
 
+def collect_smiles_from_file(csv_path):
+    df = pd.read_csv(csv_path)
+    if "SMILES" not in df.columns:
+        # Try case insensitive
+        for c in df.columns:
+            if c.lower() == "smiles":
+                df = df.rename(columns={c: "SMILES"})
+                break
+    if "SMILES" not in df.columns:
+        raise ValueError(f"Missing SMILES column in {csv_path}")
+    return set([str(s).strip() for s in df["SMILES"].tolist()])
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pathways_root", type=str, default="data/pathways")
-    ap.add_argument("--out_dir", type=str, default="data/cache")
-    ap.add_argument("--cache_name", type=str, default="smiles_graph_cache_v1.pkl")
+    ap.add_argument("--pathways_root", type=str, default=None, help="Directory with P0/train.csv structure")
+    ap.add_argument("--input_csv", type=str, default=None, help="Single CSV file (e.g. candidates.csv)")
+    ap.add_argument("--output_path", type=str, default="data/cache/smiles_graph.pkl")
     ap.add_argument("--isomeric", type=int, default=1)
     args = ap.parse_args()
 
-    os.makedirs(args.out_dir, exist_ok=True)
-    cache_path = os.path.join(args.out_dir, args.cache_name)
-    cache = SmilesGraphCache(cache_path)
+    if not args.pathways_root and not args.input_csv:
+        raise ValueError("Must provide either --pathways_root or --input_csv")
 
     isomeric = bool(args.isomeric)
 
-    smiles_raw = collect_smiles(args.pathways_root)
+    if args.input_csv:
+        print(f"Collecting SMILES from file: {args.input_csv}")
+        smiles_raw = collect_smiles_from_file(args.input_csv)
+    else:
+        print(f"Collecting SMILES from root: {args.pathways_root}")
+        smiles_raw = collect_smiles(args.pathways_root)
+
     smiles = []
     for s in smiles_raw:
         try:
@@ -51,7 +69,13 @@ def main():
             smiles.append(s)
 
     smiles_unique = sorted(set(smiles))
-    data = cache.load()
+    
+    # Load existing if available
+    data = {}
+    if os.path.exists(args.output_path):
+        with open(args.output_path, "rb") as f:
+            data = pickle.load(f)
+        print(f"Loaded existing cache with {len(data)} entries.")
 
     created = 0
     skipped = 0
@@ -65,20 +89,11 @@ def main():
         data[s] = (atom_feat, adj)
         created += 1
 
-    cache.save()
-    cache.save_meta({
-        "version": "v1",
-        "created_at": datetime.utcnow().isoformat() + "Z",
-        "pathways_root": args.pathways_root,
-        "isomeric": isomeric,
-        "num_atom_feat": NUM_ATOM_FEAT,
-        "num_unique_smiles_total": len(smiles_unique),
-        "num_cached_total": len(data),
-        "num_new_created": created,
-        "num_skipped_existing": skipped,
-    })
+    os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+    with open(args.output_path, "wb") as f:
+        pickle.dump(data, f)
 
-    print(f"Saved cache: {cache_path}")
+    print(f"Saved cache: {args.output_path}")
     print(f"Unique SMILES scanned: {len(smiles_unique)} | newly cached: {created} | already existed: {skipped}")
 
 
