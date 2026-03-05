@@ -1,0 +1,3 @@
+[submodule "external/scFoundation"]
+	path = external/scFoundation
+	url = https://github.com/biomap-research/scFoundation.git
