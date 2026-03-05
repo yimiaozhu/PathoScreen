@@ -13,15 +13,21 @@ def run_inference(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[PathoScreen] Inference P{args.pathway_id} on {device}")
 
+    # Safely get CLI arguments with fallbacks
+    output_root = getattr(args, 'output_root', 'output')
+    batch_size = getattr(args, 'batch_size', 32)
+    threshold = getattr(args, 'threshold', 0.5)
+    allow_missing_cell = getattr(args, 'allow_missing_cell', False)
+
     # 1. Setup Paths
-    paths = PathoScreenPaths(Path(args.output_root), args.pathway_id)
+    paths = PathoScreenPaths(Path(output_root), args.pathway_id)
     paths.ensure()
 
     # Determine Checkpoint (Support Path B: Pretrained)
-    if hasattr(args, 'use_pretrained') and args.use_pretrained:
-        ckpt_path = f"checkpoints/P{args.pathway_id}_final.pt" # Assuming standard location
+    if getattr(args, 'use_pretrained', False):
+        ckpt_path = f"checkpoints/P{args.pathway_id}.pt" # Updated to match your actual checkpoints dir structure
         print(f"Using official pretrained model: {ckpt_path}")
-    elif args.checkpoint:
+    elif getattr(args, 'checkpoint', None):
         ckpt_path = args.checkpoint
     else:
         # Default to trained best
@@ -37,34 +43,33 @@ def run_inference(args):
     print(f"Loaded weights: {ckpt_path}")
 
     # 3. Load Data
-    # Handle strictness logic
-    strict_cell = not args.allow_missing_cell
-    if args.strict_cell: strict_cell = True
+    strict_cell = not allow_missing_cell
 
     dataset = PathoScreenDataset(
         csv_path=args.input_csv,
         mode="inference",
         emb_pkl=args.emb_pkl,
-        emb_dir=args.emb_dir,
+        emb_dir=getattr(args, 'emb_dir', None),
         strict_cell=strict_cell,
-        smiles_cache_path=args.smiles_cache
+        smiles_cache_path=getattr(args, 'smiles_cache', None)
     )
 
     # 4. Run Inference
     engine = InferenceEngine(model, device)
-    # Note: InferenceEngine.predict returns raw probabilities (softmax)
-    # We need to ensure InferenceEngine in utils.py returns what we expect.
-    # Based on context utils.py, it returns softmax[:, 1].
-    raw_probs = engine.predict(dataset, batch_size=args.batch_size)
+    raw_probs = engine.predict(dataset, batch_size=batch_size)
 
     # 5. Calibration
     final_probs = raw_probs
     
     # Determine Calibrator Path
-    # If user didn't specify, try to find one in the output dir
-    calib_path = args.calibrator_path
+    calib_path = getattr(args, 'calibrator_path', None)
     if not calib_path:
-        default_calib = paths.calibrator_path()
+        # Try to use the pre-trained isotonic calibrator if use_pretrained is flagged
+        if getattr(args, 'use_pretrained', False):
+            default_calib = f"checkpoints/P{args.pathway_id}_isotonic.pkl"
+        else:
+            default_calib = paths.calibrator_path()
+            
         if os.path.exists(default_calib):
             calib_path = str(default_calib)
 
@@ -80,22 +85,16 @@ def run_inference(args):
 
     # 6. Save Results
     df = pd.read_csv(args.input_csv)
-    # Align lengths if dataset skipped invalid SMILES
     if len(df) != len(final_probs):
         print(f"⚠️ Warning: Input rows ({len(df)}) != Output scores ({len(final_probs)}).")
-        # In a real scenario, we should handle alignment better (e.g. by returning IDs from dataset)
-        # For now, we assume dataset order is preserved for valid entries.
-        # Truncate df to match (assuming tail was cut) or raise error.
-        # Ideally, Dataset should return indices.
-        pass
 
     score_col = f"P{args.pathway_id}_score"
     label_col = f"P{args.pathway_id}_label"
     
     df[score_col] = final_probs
-    df[label_col] = (final_probs >= args.threshold).astype(int)
+    df[label_col] = (final_probs >= threshold).astype(int)
 
-    out_path = args.output_csv or str(paths.predictions_dir / "candidates_pred.csv")
+    out_path = getattr(args, 'output_csv', None) or str(paths.predictions_dir / f"P{args.pathway_id}_candidates_pred.csv")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     df.to_csv(out_path, index=False)
     print(f"Saved predictions: {out_path}")
