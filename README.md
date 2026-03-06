@@ -55,7 +55,7 @@ Please Download the following files:
      https://hopebio2020.sharepoint.com/:f:/s/PublicSharedfiles/IgBlEJ72TBE5Q76AmgXbgjXiAR69fzcrgzqgUYdSThPLrqk
 
    - input_cell_matrix.pkl:
-     https://huggingface.co/datasets/%3Cusername%3E/pathoscreen-data/resolve/main/input_cell_matrix.pkl
+     https://huggingface.co/datasets/PathoScreen/pathoscreen-data/resolve/main/input_cell_matrix.pkl
        
    
 2. Place them into their respective directory:
