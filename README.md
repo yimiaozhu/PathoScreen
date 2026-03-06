@@ -6,7 +6,7 @@
 
 ---
 
-# 🔬 Scientific Context
+# Scientific Context
 
 The model predicts whether a molecule perturbs one of **7 MASLD-related pathways** involved in
 **Metabolic Dysfunction-Associated Steatotic Liver Disease (MASLD)**.
@@ -23,7 +23,7 @@ The model predicts whether a molecule perturbs one of **7 MASLD-related pathways
 
 ---
 
-# 🚀 Workflow & Quick Start
+# Workflow & Quick Start
 
 ## Installation
 
@@ -80,21 +80,34 @@ Note:
 
 ### 2. Generate Cell Embeddings (scFoundation)
 
-If you want to generate cell embeddings from your own **gene expression matrix**, you can run the scFoundation embedding pipeline using our wrapper script.
+If you want to generate cell embeddings from your own **gene expression matrix**, you can use our wrapper script which streamlines the process of embedding generation and feature extraction.
 
-First initialize the submodule:
+#### Input
+
+* **Format**: A `.csv` file containing gene expression data.
+* **Detailed Requirements**: For specific column naming and data normalization requirements, please refer to the [scFoundation Model README](https://www.google.com/search?q=https://github.com/biomap-research/scFoundation/tree/main/model%23readme).
+
+#### Output
+
+TThe script automatically processes the scFoundation output to align with the 978 landmark genes required by PathoScreen:
+
+* **Single Cell**: Generates a `{cell_id}_scFoundation_input_gene_emb.npy` file.
+* **Multiple Cells**: Generates a `{N}_cells_scFoundation_input_gene_emb.pkl` dictionary.
+
+#### Execution
+
+Initialize the submodule and run the wrapper:
 
 ```bash
+# Initialize submodule if not already done
 git submodule update --init --recursive
+
+# Generate embeddings
+bash scripts/run_scfoundation_emb.sh path/to/your_data.csv data/cell_emb/
+
 ```
 
-Then run the embedding bash script, providing your input CSV and desired output directory:
-
-```bash
-bash scripts/run_scfoundation_emb.sh path/to/your_gene_expression.csv data/cell_emb/
-```
-
-Note: Ensure models.ckpt is properly placed in `external/scFoundation/model/models/` before running this script.
+> **Note**: Ensure `models.ckpt` is correctly placed in `external/scFoundation/model/models/` before execution.
 
 ---
 
