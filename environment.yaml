@@ -29,5 +29,6 @@ dependencies:
   - pip:
       - einops==0.8.2
       - deepspeed==0.18.6
+      - local-attention
       - hjson       
-      - py-cpuinfo  
+      - py-cpuinfo 
